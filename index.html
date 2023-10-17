@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script src="./modules/gif.js"></script>
+</head>
+
+<body>
+    <div style="display:flex;">
+        <input type="file" class="upload" multiple="multiple" />
+        <button id="download" disabled>下载</button>
+    </div>
+    <div class="video-con"></div>
+    <script>
+        const input = document.getElementsByClassName("upload")[0];
+        const delay = 100
+        const links = []
+
+        input.addEventListener("change", (e) => {
+            document.getElementById('download').setAttribute('disabled', 'disabled')
+            Object.keys(e.target.files).forEach((key) => {
+                let width = 0
+                let height = 0
+                // 创建video
+                const videoFile = e.target.files[key];
+                console.log(videoFile, '===videoFile');
+                const videoUrl = URL.createObjectURL(videoFile);
+                const video = document.createElement('video')
+                video.setAttribute("src", videoUrl);
+                video.setAttribute('autoplay', true);
+                video.setAttribute('muted', true)
+                // document
+                //     .getElementsByClassName("video-con")[0]
+                //     .appendChild(video);
+
+
+                // 创建GIF
+                const videoGif = new GIF({
+                    workers: 2,
+                    quality: 1,
+                    workerScript: "./modules/gif.worker.js",
+                    debug: true,
+                });
+
+
+
+                // video 事件监听与播放
+                video.addEventListener("loadedmetadata", () => {
+                    // 部分视频尺寸可能会很大，可以再加载完成时设置样式缩小其尺寸
+                    width = video.videoWidth
+                    height = video.videoHeight
+
+                    video.setAttribute("style", `width:${width}px;height:${height}px`);
+                });
+                video.addEventListener('ended', () => {
+                    // 视频播放完毕，清除时间函数
+                    clearInterval(timer);
+
+                    // 将追加的gif帧，渲染成完整图
+                    videoGif.render()
+
+                    // 监听渲染完毕，并输出 gif 地址
+                    videoGif.on('finished', blob => {
+                        const gifImg = URL.createObjectURL(blob);
+                        links.push({ link: gifImg, name: videoFile.name })
+                        console.log(links, Object.keys(e.target.files).length);
+                        if (links.length === Object.keys(e.target.files).length) {
+                            document.getElementById('download').removeAttribute('disabled');
+                        }
+                    })
+                })
+
+                video.play();
+
+                // 创建canvas
+                const canvas = document.createElement("canvas");
+                const ctx = canvas.getContext('2d');
+
+                // 设置时间函数
+                const timer = setInterval(() => {
+                    // 画布的宽高与视频宽高保持一致，延迟取上面定义的延迟时间
+                    canvas.width = width;
+                    canvas.height = height;
+                    canvas.delay = delay
+                    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                    // 将当前画面帧追加到 gif中
+                    const imgImage = new Image();
+                    imgImage.src = canvas.toDataURL("image/png");
+
+                    imgImage.onload = (e) => {
+                        // 绘制底色
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                        // 绘制当前帧
+                        ctx.drawImage(imgImage, 0, 0, canvas.width, canvas.height);
+
+                        // 当前帧追加到gif中
+                        videoGif.addFrame(canvas, { copy: true, delay: canvas.delay });
+                    }
+                }, delay)
+            });
+        });
+
+        document.getElementById('download').addEventListener('click', () => {
+
+            links.forEach(item => {
+                const aLink = document.createElement('a');
+                const nameArr = item.name.split('.')
+                nameArr.pop()
+                aLink.setAttribute('download', nameArr.join(''))
+                aLink.setAttribute('href', item.link)
+                aLink.click()
+            })
+        })
+
+
+    </script>
+</body>
+
+</html>
