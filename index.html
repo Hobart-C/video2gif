@@ -9,24 +9,26 @@
 </head>
 
 <body>
-    <div style="display:flex;">
+    图片质量(0-1):<input class="picQua" type="number" max="1" min="0.1" step="0.1" />
+    <div style="display:flex;padding:0.5rem 0">
         <input type="file" class="upload" multiple="multiple" />
         <button id="download" disabled>下载</button>
     </div>
     <div class="video-con"></div>
     <script>
+        document.getElementsByClassName('picQua')[0].value = 0.6
         const input = document.getElementsByClassName("upload")[0];
         const delay = 100
-        const links = []
+        let links = []
 
         input.addEventListener("change", (e) => {
+            links = []
             document.getElementById('download').setAttribute('disabled', 'disabled')
-            Object.keys(e.target.files).forEach((key) => {
+            Object.keys(e.target.files).forEach((key, idx) => {
                 let width = 0
                 let height = 0
                 // 创建video
                 const videoFile = e.target.files[key];
-                console.log(videoFile, '===videoFile');
                 const videoUrl = URL.createObjectURL(videoFile);
                 const video = document.createElement('video')
                 video.setAttribute("src", videoUrl);
@@ -52,25 +54,28 @@
                     // 部分视频尺寸可能会很大，可以再加载完成时设置样式缩小其尺寸
                     width = video.videoWidth
                     height = video.videoHeight
-
-                    video.setAttribute("style", `width:${width}px;height:${height}px`);
                 });
                 video.addEventListener('ended', () => {
                     // 视频播放完毕，清除时间函数
                     clearInterval(timer);
 
-                    // 将追加的gif帧，渲染成完整图
-                    videoGif.render()
-
                     // 监听渲染完毕，并输出 gif 地址
                     videoGif.on('finished', blob => {
                         const gifImg = URL.createObjectURL(blob);
-                        links.push({ link: gifImg, name: videoFile.name })
+                        if (links.find(item => item.name === videoFile.name)) {
+                            // gif.js bug
+                            links.find(item => item.name === videoFile.name).link = gifImg
+                        } else {
+                            links.push({ link: gifImg, name: videoFile.name })
+                        }
                         console.log(links, Object.keys(e.target.files).length);
                         if (links.length === Object.keys(e.target.files).length) {
                             document.getElementById('download').removeAttribute('disabled');
                         }
                     })
+                    // 将追加的gif帧，渲染成完整图
+                    videoGif.render()
+
                 })
 
                 video.play();
@@ -89,7 +94,7 @@
 
                     // 将当前画面帧追加到 gif中
                     const imgImage = new Image();
-                    imgImage.src = canvas.toDataURL("image/png");
+                    imgImage.src = canvas.toDataURL("image/webp", Number(document.getElementsByClassName('picQua')[0].value));
 
                     imgImage.onload = (e) => {
                         // 绘制底色
