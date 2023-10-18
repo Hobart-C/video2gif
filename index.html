@@ -6,18 +6,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
     <script src="./modules/gif.js"></script>
+    <link rel="stylesheet" href="./index.css" />
 </head>
 
 <body>
-    图片质量(0-1):<input class="picQua" type="number" max="1" min="0.1" step="0.1" />
-    <div style="display:flex;padding:0.5rem 0">
-        <input type="file" class="upload" multiple="multiple" />
-        <button id="download" disabled>下载</button>
+    <div class="title">Video To GIF</div>
+    <div class="container">
+        <div class="pic-quality">
+            <div class="label">
+                图片质量(0-1):
+            </div>
+            <input class="picQua" type="number" max="1" min="0.1" step="0.1" />
+        </div>
+        <div class="upload-area">
+            <label class="input-file-button" for="upload"> 上传文件 </label>
+            <input type="file" id="upload" multiple="multiple" style="display: none;" />
+            <div class="tips">
+                可以选择多个文件，但最好不要超过十个
+                (浏览器可能会阻止十个以上的下载)
+            </div>
+        </div>
+        <div id="download" disabled>下载</div>
     </div>
     <div class="video-con"></div>
     <script>
         document.getElementsByClassName('picQua')[0].value = 0.6
-        const input = document.getElementsByClassName("upload")[0];
+        const input = document.getElementById("upload");
         const delay = 100
         let links = []
 
@@ -48,17 +62,54 @@
                 });
 
 
+                let timer
+
 
                 // video 事件监听与播放
                 video.addEventListener("loadedmetadata", () => {
                     // 部分视频尺寸可能会很大，可以再加载完成时设置样式缩小其尺寸
                     width = video.videoWidth
                     height = video.videoHeight
+                    video.play();
+
                 });
+
+                video.onloadeddata = () => {
+                    // alert('loadeddata')
+                    console.log('loadeddata');
+                    // 创建canvas
+                    const canvas = document.createElement("canvas");
+                    const ctx = canvas.getContext('2d');
+                    // 设置时间函数
+                    timer = setInterval(() => {
+                        // 画布的宽高与视频宽高保持一致，延迟取上面定义的延迟时间
+                        canvas.width = width;
+                        canvas.height = height;
+                        canvas.delay = delay
+                        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                        // 将当前画面帧追加到 gif中
+                        const imgImage = new Image();
+                        imgImage.src = canvas.toDataURL("image/webp", Number(document.getElementsByClassName('picQua')[0].value));
+
+                        imgImage.onload = (e) => {
+                            // 绘制底色
+                            ctx.fillStyle = 'rgba(,,,)'
+                            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                            // 绘制当前帧
+                            ctx.drawImage(imgImage, 0, 0, canvas.width, canvas.height);
+
+                            // 当前帧追加到gif中
+                            videoGif.addFrame(canvas, { copy: true, delay: canvas.delay });
+                        }
+                    }, delay)
+                }
+                // video.addEventListener('play')
+
                 video.addEventListener('ended', () => {
                     // 视频播放完毕，清除时间函数
                     clearInterval(timer);
-
                     // 监听渲染完毕，并输出 gif 地址
                     videoGif.on('finished', blob => {
                         const gifImg = URL.createObjectURL(blob);
@@ -78,35 +129,6 @@
 
                 })
 
-                video.play();
-
-                // 创建canvas
-                const canvas = document.createElement("canvas");
-                const ctx = canvas.getContext('2d');
-
-                // 设置时间函数
-                const timer = setInterval(() => {
-                    // 画布的宽高与视频宽高保持一致，延迟取上面定义的延迟时间
-                    canvas.width = width;
-                    canvas.height = height;
-                    canvas.delay = delay
-                    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-
-                    // 将当前画面帧追加到 gif中
-                    const imgImage = new Image();
-                    imgImage.src = canvas.toDataURL("image/webp", Number(document.getElementsByClassName('picQua')[0].value));
-
-                    imgImage.onload = (e) => {
-                        // 绘制底色
-                        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-                        // 绘制当前帧
-                        ctx.drawImage(imgImage, 0, 0, canvas.width, canvas.height);
-
-                        // 当前帧追加到gif中
-                        videoGif.addFrame(canvas, { copy: true, delay: canvas.delay });
-                    }
-                }, delay)
             });
         });
 
@@ -121,6 +143,7 @@
                 aLink.click()
             })
         })
+
 
 
     </script>
