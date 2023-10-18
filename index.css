@@ -58,12 +58,15 @@ body {
 }
 
 .upload-area {
+  user-select: none;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 1.2rem 0;
+  /* padding: 1.2rem 0; */
+  margin-bottom: 0.8rem;
 }
-.upload-area .input-file-button {
+
+.upload-area .upload .input-file-button {
   padding: 0.6rem 2rem;
   background: #1989fa;
   border-radius: 4px;
@@ -71,14 +74,17 @@ body {
   cursor: pointer;
 }
 
+.upload-area .upload {
+  margin-bottom: 0.5rem;
+}
 .upload-area .tips {
-  margin-top: 0.8rem;
   font-size: 0.8rem;
   color: #909399;
   text-align: center;
 }
 
 #download {
+  user-select: none;
   padding: 0.6rem 2rem;
   background: #67c23a;
   border-radius: 4px;
@@ -86,9 +92,40 @@ body {
   cursor: pointer;
 }
 
+.download-disabled {
+  cursor: not-allowed !important;
+  background: #b3e19d !important;
+}
+
 /* 删除箭头 */
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
+}
+
+.loading {
+  user-select: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  visibility: hidden;
+  z-index: 2;
+}
+.loading .loading-text {
+  margin-right: 1rem;
+  color: #1989fa;
+  font-size: 2rem;
+}
+.loading .loading-icon {
+  width: 1.8rem;
+}
+.show {
+  visibility: visible;
 }

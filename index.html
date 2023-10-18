@@ -19,25 +19,37 @@
             <input class="picQua" type="number" max="1" min="0.1" step="0.1" />
         </div>
         <div class="upload-area">
-            <label class="input-file-button" for="upload"> 上传文件 </label>
-            <input type="file" id="upload" multiple="multiple" style="display: none;" />
+            <div class="upload">
+                <div class="input-file-button"> 上传文件 </div>
+                <input type="file" id="upload" multiple="multiple" style="display: none;" />
+            </div>
             <div class="tips">
                 可以选择多个文件，但最好不要超过十个
                 (浏览器可能会阻止十个以上的下载)
             </div>
         </div>
-        <div id="download" disabled>下载</div>
+        <div id="download" class="download-disabled">下载</div>
+        <div class="loading">
+            <div class="loading-text">转换中...</div>
+            <img class="loading-icon" src="./assets/loading.gif" alt="">
+        </div>
     </div>
     <div class="video-con"></div>
     <script>
+
         document.getElementsByClassName('picQua')[0].value = 0.6
         const input = document.getElementById("upload");
         const delay = 100
         let links = []
 
+        document.getElementsByClassName('input-file-button')[0].onclick = () => {
+            input.click()
+            console.log(111);
+        }
         input.addEventListener("change", (e) => {
             links = []
-            document.getElementById('download').setAttribute('disabled', 'disabled')
+            document.getElementById('download').classList.add('download-disabled')
+            document.getElementsByClassName('loading')[0].classList.add('show')
             Object.keys(e.target.files).forEach((key, idx) => {
                 let width = 0
                 let height = 0
@@ -121,7 +133,7 @@
                         }
                         console.log(links, Object.keys(e.target.files).length);
                         if (links.length === Object.keys(e.target.files).length) {
-                            document.getElementById('download').removeAttribute('disabled');
+                            handleTransformSuccess()
                         }
                     })
                     // 将追加的gif帧，渲染成完整图
@@ -133,7 +145,8 @@
         });
 
         document.getElementById('download').addEventListener('click', () => {
-
+            if (document.getElementById('download').className.includes('download-disabled'))
+                return
             links.forEach(item => {
                 const aLink = document.createElement('a');
                 const nameArr = item.name.split('.')
@@ -144,6 +157,11 @@
             })
         })
 
+
+        const handleTransformSuccess = () => {
+            document.getElementById('download').classList.remove('download-disabled');
+            document.getElementsByClassName('loading')[0].classList.remove('show')
+        }
 
 
     </script>
